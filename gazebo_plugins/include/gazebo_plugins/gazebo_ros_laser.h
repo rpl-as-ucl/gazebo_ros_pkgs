@@ -95,6 +95,9 @@ namespace gazebo
 
     /// \brief prevents blocking
     private: PubMultiQueue pmq;
+    
+    /// \brief ignores tf_prefix for the frame
+    private: bool ignore_tf_prefix_;
   };
 }
 #endif

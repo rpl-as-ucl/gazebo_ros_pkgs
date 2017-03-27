@@ -95,13 +95,20 @@ void GazeboRosLaser::Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf)
     this->frame_name_ = this->sdf->Get<std::string>("frameName");
 
 
-  if (!this->sdf->HasElement("topicName"))
+  if (!this->sdf->HasElement("topicName")) 
   {
     ROS_INFO("Laser plugin missing <topicName>, defaults to /world");
     this->topic_name_ = "/world";
   }
   else
     this->topic_name_ = this->sdf->Get<std::string>("topicName");
+
+  if (!this->sdf->HasElement("ignoreTfPrefix"))
+  {
+    this->ignore_tf_prefix_ = false;
+  }
+  else
+    this->ignore_tf_prefix_ = this->sdf->Get<bool>("ignoreTfPrefix");
 
   this->laser_connect_count_ = 0;
 
@@ -113,7 +120,7 @@ void GazeboRosLaser::Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf)
     return;
   }
 
-  ROS_INFO ( "Starting Laser Plugin (ns = %s)!", this->robot_namespace_.c_str() );
+  ROS_INFO ( "Starting Laser Plugin (ns = %s)! ignore prefix = %d", this->robot_namespace_.c_str(), this->ignore_tf_prefix_);
   // ros callback queue for processing subscription
   this->deferred_load_thread_ = boost::thread(
     boost::bind(&GazeboRosLaser::LoadThread, this));
@@ -136,11 +143,14 @@ void GazeboRosLaser::LoadThread()
       this->tf_prefix_ = this->robot_namespace_;
       boost::trim_right_if(this->tf_prefix_,boost::is_any_of("/"));
   }
-  ROS_INFO("Laser Plugin (ns = %s)  <tf_prefix_>, set to \"%s\"",
-             this->robot_namespace_.c_str(), this->tf_prefix_.c_str());
+ 
 
   // resolve tf prefix
-  this->frame_name_ = tf::resolve(this->tf_prefix_, this->frame_name_);
+  if(not this->ignore_tf_prefix_){
+	this->frame_name_ = tf::resolve(this->tf_prefix_, this->frame_name_);
+	 ROS_INFO("Laser Plugin (ns = %s)  <tf_prefix_>, set to \"%s\"",
+             this->robot_namespace_.c_str(), this->tf_prefix_.c_str());
+   }
 
   if (this->topic_name_ != "")
   {
