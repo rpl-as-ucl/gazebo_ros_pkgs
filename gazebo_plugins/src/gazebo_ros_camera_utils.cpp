@@ -280,15 +280,23 @@ void GazeboRosCameraUtils::LoadThread()
   this->itnode_ = new image_transport::ImageTransport(*this->rosnode_);
 
   // resolve tf prefix
-  this->tf_prefix_ = tf::getPrefixParam(*this->rosnode_);
-  if(this->tf_prefix_.empty()) {
-      this->tf_prefix_ = this->robot_namespace_;
-      boost::trim_right_if(this->tf_prefix_,boost::is_any_of("/"));
-  }
-  this->frame_name_ = tf::resolve(this->tf_prefix_, this->frame_name_);
+ if (!this->sdf->HasElement("ignoreTfPrefix"))
+	{
+		this->ignore_tf_prefix_ = false;
+	}
+	else
+		this->ignore_tf_prefix_ = this->sdf->Get<bool>("ignoreTfPrefix");
 
-  ROS_INFO_NAMED("camera_utils", "Camera Plugin (ns = %s)  <tf_prefix_>, set to \"%s\"",
-             this->robot_namespace_.c_str(), this->tf_prefix_.c_str());
+	if(not this->ignore_tf_prefix_){
+	  this->tf_prefix_ = tf::getPrefixParam(*this->rosnode_);
+	  if(this->tf_prefix_.empty()) {
+		  this->tf_prefix_ = this->robot_namespace_;
+		  boost::trim_right_if(this->tf_prefix_,boost::is_any_of("/"));
+	  }
+	  this->frame_name_ = tf::resolve(this->tf_prefix_, this->frame_name_);
+	}
+	ROS_INFO_NAMED("camera_utils", "Camera Plugin (ns = %s)  <ignore prefix_>=%d",
+				 this->robot_namespace_.c_str(), this->ignore_tf_prefix_);
 
 
   if (!this->camera_name_.empty())

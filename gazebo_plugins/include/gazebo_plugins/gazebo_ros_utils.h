@@ -113,8 +113,10 @@ private:
     std::string plugin_;        /// name of the plugin class
     std::string namespace_;     /// name of the launched node
     boost::shared_ptr<ros::NodeHandle> rosnode_; /// rosnode
-    std::string tf_prefix_;     /// prefix for the ros tf plublisher if not set it uses the namespace_
+    std::string tf_prefix_;     /// prefix for the ros tf plublisher if not set it uses the namespace_    
     std::string info_text;      /// info text for log messages to identify the node
+    
+    bool ignore_tf_prefix_;
     /**
      * Reads the common plugin parameters used by the constructor
      **/

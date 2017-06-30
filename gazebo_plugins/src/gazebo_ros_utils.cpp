@@ -82,15 +82,24 @@ void GazeboRos ::readCommonParameter() {
     if (sdf_->HasElement("rosDebugLevel")) {
         ROS_INFO_NAMED("utils", "%s: <rosDebugLevel> = %s", info(), debugLevel.c_str());
     }
-
-
-    tf_prefix_ = tf::getPrefixParam(*rosnode_);
-    if(tf_prefix_.empty())
-    {
-        tf_prefix_ = namespace_;
-        boost::trim_right_if(tf_prefix_,boost::is_any_of("/"));
-    }
-    ROS_INFO_NAMED("utils", "%s: <tf_prefix> = %s", info(), tf_prefix_.c_str());
+    
+    if(!sdf_->HasElement("ignoreTfPrefix")){
+		this->ignore_tf_prefix_=false;
+	}
+	else
+		this->ignore_tf_prefix_=sdf_->Get<bool>("ignoreTfPrefix");
+    
+	//resolve tf_prefix
+	if(not this->ignore_tf_prefix_){
+		tf_prefix_ = tf::getPrefixParam(*rosnode_);
+		if(tf_prefix_.empty())
+		{
+			tf_prefix_ = namespace_;
+			boost::trim_right_if(tf_prefix_,boost::is_any_of("/"));
+		}
+		ROS_INFO_NAMED("utils", "%s: <tf_prefix> = %s", info(), tf_prefix_.c_str());
+	}
+	ROS_INFO ( "Utils (ns = %s)! ignore prefix = %d", namespace_.c_str(), this->ignore_tf_prefix_);
 }
 
 
