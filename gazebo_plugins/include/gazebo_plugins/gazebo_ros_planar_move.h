@@ -67,6 +67,7 @@ namespace gazebo {
       boost::shared_ptr<tf::TransformBroadcaster> transform_broadcaster_;
       nav_msgs::Odometry odom_;
       std::string tf_prefix_;
+      bool publish_tf_;
 
       boost::mutex lock;
 
