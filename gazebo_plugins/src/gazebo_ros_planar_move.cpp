@@ -52,6 +52,17 @@ namespace gazebo
         sdf->GetElement("robotNamespace")->Get<std::string>();
     }
 
+    disable_pitch_and_roll_ = false;
+    if (!sdf->HasElement ("disablePitchAndRoll"))
+    {
+      ROS_INFO_NAMED("planar_move", "PlanarMovePlugin missing <disablePitchAndRoll>, "
+          "defaults to \"%d\"", disable_pitch_and_roll_);
+    }
+    else
+    {
+      disable_pitch_and_roll_ = sdf->GetElement("disablePitchAndRoll")->Get<bool>();
+    }
+
     command_topic_ = "cmd_vel";
     if (!sdf->HasElement("commandTopic"))
     {
@@ -158,14 +169,24 @@ namespace gazebo
       boost::thread(boost::bind(&GazeboRosPlanarMove::QueueThread, this));
 
     // listen to the update event (broadcast every simulation iteration)
-    update_connection_ =
+    update_connection_begin_ =
       event::Events::ConnectWorldUpdateBegin(
-          boost::bind(&GazeboRosPlanarMove::UpdateChild, this));
+          boost::bind(&GazeboRosPlanarMove::UpdateChildBegin, this));
+    
+    if (disable_pitch_and_roll_ == true)
+    {
+      ROS_WARN_NAMED("planar_move", "PlanarMovePlugin (ns = %s) has <disablePitchAndRoll> to true, that means robot cannot move through slopes",
+          robot_namespace_.c_str());
+
+      update_connection_end_ =
+        event::Events::ConnectWorldUpdateEnd(
+            boost::bind(&GazeboRosPlanarMove::UpdateChildEnd, this));
+    }
 
   }
 
   // Update the controller
-  void GazeboRosPlanarMove::UpdateChild()
+  void GazeboRosPlanarMove::UpdateChildBegin()
   {
     boost::mutex::scoped_lock scoped_lock(lock);
 #if GAZEBO_MAJOR_VERSION >= 8
@@ -193,6 +214,21 @@ namespace gazebo
       }
     }
   }
+  
+  void GazeboRosPlanarMove::UpdateChildEnd()
+  {
+    boost::mutex::scoped_lock scoped_lock(lock);
+#if GAZEBO_MAJOR_VERSION >= 8
+    ignition::math::Pose3d pose = parent_->WorldPose();
+#else
+    ignition::math::Pose3d pose = parent_->GetWorldPose().Ign();
+#endif
+    ignition::math::Vector3d current_position = pose.Pos();
+    current_position.Z(0);
+    ignition::math::Quaterniond current_orientation = pose.Rot();
+    current_orientation.Euler(0,0,current_orientation.Yaw());
+    parent_->SetWorldPose(ignition::math::Pose3d(current_position, current_orientation));
+}
 
   // Finalize the controller
   void GazeboRosPlanarMove::FiniChild() {
