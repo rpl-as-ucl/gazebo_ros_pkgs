@@ -183,7 +183,7 @@ namespace gazebo
     update_connection_begin_ =
       event::Events::ConnectWorldUpdateBegin(
           boost::bind(&GazeboRosPlanarMove::UpdateChildBegin, this));
-    
+
     if (disable_pitch_and_roll_ == true)
     {
       ROS_WARN_NAMED("planar_move", "PlanarMovePlugin (ns = %s) has <disablePitchAndRoll> to true, that means robot cannot move through slopes",
@@ -225,7 +225,7 @@ namespace gazebo
       }
     }
   }
-  
+
   void GazeboRosPlanarMove::UpdateChildEnd()
   {
     boost::mutex::scoped_lock scoped_lock(lock);
@@ -239,6 +239,11 @@ namespace gazebo
     ignition::math::Quaterniond current_orientation = pose.Rot();
     current_orientation.Euler(0,0,current_orientation.Yaw());
     parent_->SetWorldPose(ignition::math::Pose3d(current_position, current_orientation));
+    parent_->SetLinearVel(ignition::math::Vector3d(
+          0,
+          0,
+          0));
+    parent_->SetAngularVel(ignition::math::Vector3d(0, 0, 0));
 }
 
   // Finalize the controller
