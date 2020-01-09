@@ -235,7 +235,7 @@ namespace gazebo
     ignition::math::Pose3d pose = parent_->GetWorldPose().Ign();
 #endif
     ignition::math::Vector3d current_position = pose.Pos();
-    current_position.Z(0);
+    //current_position.Z(0);
     ignition::math::Quaterniond current_orientation = pose.Rot();
     current_orientation.Euler(0,0,current_orientation.Yaw());
     parent_->SetWorldPose(ignition::math::Pose3d(current_position, current_orientation));
