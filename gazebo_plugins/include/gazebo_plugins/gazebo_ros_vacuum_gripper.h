@@ -136,6 +136,7 @@ class GazeboRosVacuumGripper : public ModelPlugin
   /// \brief ROS Wrench topic name inputs
   private: std::string topic_name_;
   private: std::string service_name_;
+  private: std::string service_namespace_;
   /// \brief The Link this plugin is attached to, and will exert forces on.
   private: std::string link_name_;
 

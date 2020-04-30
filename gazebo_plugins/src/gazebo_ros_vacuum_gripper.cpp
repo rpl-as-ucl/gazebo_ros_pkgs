@@ -102,6 +102,14 @@ void GazeboRosVacuumGripper::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   else
     topic_name_ = _sdf->GetElement("topicName")->Get<std::string>();
 
+    if (!_sdf->HasElement("serviceNamespace"))
+    {
+      ROS_FATAL_NAMED("vacuum_gripper", "vacuum_gripper plugin missing <serviceNamespace>, cannot proceed");
+      return;
+    }
+    else
+      service_namespace_ = _sdf->GetElement("serviceNamespace")->Get<std::string>();
+
   // Make sure the ROS node for Gazebo has already been initialized
   if (!ros::isInitialized())
   {
@@ -120,15 +128,19 @@ void GazeboRosVacuumGripper::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
     ros::VoidPtr(), &queue_);
   pub_ = rosnode_->advertise(ao);
 
+
+  std::string on_service_name = service_namespace_ + "/on";
+  std::string off_service_name = service_namespace_ + "/off";
+
   // Custom Callback Queue
   ros::AdvertiseServiceOptions aso1 =
     ros::AdvertiseServiceOptions::create<std_srvs::Empty>(
-    "on", boost::bind(&GazeboRosVacuumGripper::OnServiceCallback,
+    on_service_name, boost::bind(&GazeboRosVacuumGripper::OnServiceCallback,
     this, _1, _2), ros::VoidPtr(), &queue_);
   srv1_ = rosnode_->advertiseService(aso1);
   ros::AdvertiseServiceOptions aso2 =
     ros::AdvertiseServiceOptions::create<std_srvs::Empty>(
-    "off", boost::bind(&GazeboRosVacuumGripper::OffServiceCallback,
+    off_service_name, boost::bind(&GazeboRosVacuumGripper::OffServiceCallback,
     this, _1, _2), ros::VoidPtr(), &queue_);
   srv2_ = rosnode_->advertiseService(aso2);
 
@@ -207,7 +219,8 @@ void GazeboRosVacuumGripper::UpdateChild()
         links[j]->SetAngularVel(link_->WorldAngularVel());
 #else
         links[j]->SetLinearVel(link_->GetWorldLinearVel());
-        links[j]->SetAngularVel(link_->GetWorldAngularVel());
+        links[j]->SetAngularVel(link_->math::Vector3(0, 0, 0));
+//        links[j]->SetAngularVel(link_->GetWorldAngularVel());
 #endif
         double norm_force = 1 / norm;
         if (norm < 0.01) {
